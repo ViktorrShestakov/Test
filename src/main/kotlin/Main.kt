@@ -12,110 +12,99 @@ data class Car(
     val vin: String,
     val description: String = "Описание отсутствует"
 )
-
-fun main() {
+object Auto {
 
     val cars: MutableMap<CarModel, MutableSet<Car>> = mutableMapOf(
         CarModel.AUDI to mutableSetOf(
-            Car(CarModel.AUDI, "Audi RS7", 27500000, "WAUZZZ4G7FN123456", "Самая лучшая машина в мире!")
+            Car(CarModel.AUDI, "Audi RS7", 27500000, "WAUZZZ4G7FN123456", "Самая лучшая машина в мире!"),
+            Car(CarModel.AUDI, "Audi A6", 4500000, "WAUZZZ4G7FN654321", "Мой вариант, если Илья не возьмет меня на работу"),
         ),
         CarModel.BMW to mutableSetOf(
-            Car(CarModel.BMW, "BMW M5", 6700000, "GVMESP3V8FN123456", "Говно")
+            Car(CarModel.BMW, "BMW M5", 6700000, "GVMESP3V8FN123456", "Говно"),
+            Car(CarModel.BMW, "BMW X5", 5200000, "GVMESP3V8FN999999", "Забава"),
         ),
         CarModel.MERCEDES to mutableSetOf(
-            Car(CarModel.MERCEDES, "Mercedes E200", 12500000, "HDGFDF1E7FN123456", "Говно")
+            Car(CarModel.MERCEDES, "Mercedes E200", 12500000, "HDGFDF1E7FN123456", "Говно"),
+            Car(CarModel.MERCEDES, "Mercedes S500", 18500000, "HDGFDF1E7FN555555", "Сойдет"),
         ),
         CarModel.VOLKSWAGEN to mutableSetOf(
-            Car(CarModel.VOLKSWAGEN, "Volkswagen Golf 2", 50000, "RWETYU5G7FN123456", "Красненькая")
+            Car(CarModel.VOLKSWAGEN, "Volkswagen Golf 2", 50000, "RWETYU5G7FN123456", "Красненькая"),
+            Car(CarModel.VOLKSWAGEN, "Volkswagen Polo", 980000, "RWETYU5G7FN777777", "..."),
         )
     )
+}
 
-    var input: Int
+fun addCar(args: List<String>) {
+    val model = CarModel.valueOf(args[1].uppercase())
+    val name = args[2]
+    val price = args[3].toInt()
+    val vin = args[4]
+    val description = args.getOrElse(5) { "Описание_отсутствует" }
+
+    Auto.cars.getOrPut(model) { mutableSetOf() }.add(Car(model, name, price, vin, description))
+    println("Авто добавлено")
+}
+
+fun deleteCar(args: List<String>) {
+    val model = CarModel.valueOf(args[1].uppercase())
+    val vin = args[2]
+
+    Auto.cars.getOrPut(model) { mutableSetOf() }.removeIf { it.vin == vin }
+
+    println("Авто удалено")
+}
+
+fun updateCar(args: List<String>) {
+    val model = CarModel.valueOf(args[1].uppercase())
+    val vin = args[2]
+    val newPrice = args[3].toInt()
+
+    Auto.cars.getOrPut(model) { mutableSetOf() }
+        .find { it.vin == vin }!!.price = newPrice
+
+    println("Цена обновлена")
+}
+
+fun showCars(args: List<String>) {
+    val model = CarModel.valueOf(args[1].uppercase())
+    Auto.cars.getOrPut(model) { mutableSetOf() }.sortedBy { it.price }.forEach { println(it) }
+}
+
+fun showRange(args: List<String>) {
+    val min = args[1].toInt()
+    val max = args[2].toInt()
+
+    Auto.cars.values.flatten().filter { it.price in min..max }.forEach { println(it) }
+}
+
+fun main() {
+    var command: String=""
+    println("""
+        Команды: 
+        add модель название цена вин_номер описание 
+        del модель вин_номер
+        update моедль вин_номер новая_цена 
+        show модель 
+        range минимум максимум 
+        exit
+        """.trimIndent())
 
     do {
-        println(
-            """
-            Выберите действие:
-            1 — Добавить авто
-            2 — Удалить авто
-            3 — Изменить цену авто
-            4 — Показать авто по марке (сортировка по цене)
-            5 — Показать авто в диапазоне цен
-            6 — Выход
-        """.trimIndent()
-        )
+        val input = readln().trim()
+        if (input.isEmpty()) continue
 
-        print("Введите число: ")
-        input = readln().toInt()
+        val args = input.split(" ")
+        command = args[0].lowercase()
 
-        when (input) {
-
-            1 -> {
-                println("Введите модель (AUDI, BMW, MERCEDES, VOLKSWAGEN):")
-                val model = CarModel.valueOf(readln().uppercase())
-                println("Введите полное имя авто:")
-                val name = readln()
-                println("Введите цену:")
-                val price = readln().toInt()
-                println("Введите VIN номер:")
-                val vin = readln()
-                println("Введите описание (если нужно):")
-                val description = readln()
-
-                val car = Car(model, name, price, vin, description)
-                cars.getOrPut(model) { mutableSetOf() }.add(car)
-
-                println("Авто добавлено")
-            }
-
-            2 -> {
-                println("Введите модель:")
-                val model = CarModel.valueOf(readln().uppercase())
-                println("Введите VIN номер авто:")
-                val vin = readln()
-                val set = cars.getOrPut(model) { mutableSetOf() }
-                val removed = set.removeIf { it.vin == vin }
-                if (removed) println("Авто успешно удалено.")
-                else println("Авто с таким VIN номером не найдено.")
-            }
-
-            3 -> {
-                println("Введите модель:")
-                val model = CarModel.valueOf(readln().uppercase())
-                println("Введите VIN номер:")
-                val vin = readln()
-                val set = cars.getOrPut(model) { mutableSetOf() }
-                val car = set.find { it.vin == vin }
-                if (car == null) println("Авто не найдено.")
-                else {
-                    println("Введите новую цену:")
-                    car.price = readln().toInt()
-                    println("Цена обновлена!")
-                }
-            }
-
-            4 -> {
-                println("Введите модель:")
-                val model = CarModel.valueOf(readln().uppercase())
-                val list = cars.getOrPut(model) { mutableSetOf() }.sortedBy { it.price }
-                list.forEach { println(it) }
-            }
-
-            5 -> {
-                println("Введите минимальную цену:")
-                val min = readln().toInt()
-                println("Введите максимальную цену:")
-                val max = readln().toInt()
-                val list = cars.values.flatten().filter { it.price in min..max }
-                list.forEach { println(it) }
-            }
-
-            6 -> println("Выход из программы")
-
-            else -> println("Команда введена неверно. Попробуйте снова.")
+        when (command) {
+            "add" -> addCar(args)
+            "del" -> deleteCar(args)
+            "update" -> updateCar(args)
+            "show" -> showCars(args)
+            "range" -> showRange(args)
+            "exit" -> println("Завершение работы")
+            else -> println("Неизвестная команда.")
         }
 
-    } while (input != 6)
-
-
+    } while (command != "exit")
 }
